@@ -1,0 +1,33 @@
+name: Deploy to Staging
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+      - completed
+
+jobs:
+  deploy-staging:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Terraform Init & Apply
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve -var="env=staging"
+
+      - name: Run Smoke Test
+        run: curl -f https://${{ secrets.STAGING_APP_URL }} || exit 1
+
+      - name: Terraform Destroy (Teardown)
+        run: |
+          cd terraform
+          terraform destroy -auto-approve -var="env=staging"
