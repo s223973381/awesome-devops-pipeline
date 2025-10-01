@@ -1,4 +1,4 @@
-name: CI + Staging Pipeline
+name: CI + Staging + Production Pipeline
 
 on:
   push:
@@ -40,46 +40,46 @@ jobs:
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}
 
   deploy-staging:
-      needs: build-test-push
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout repo
-          uses: actions/checkout@v3
+    needs: build-test-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-        - name: Azure Login
-          uses: azure/login@v1
-          with:
-            creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-        - name: Set up Terraform
-          uses: hashicorp/setup-terraform@v3
-          with:
-            terraform_version: 1.6.6
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
 
-        - name: Terraform Init & Apply
-          run: |
-            cd terraform
-            terraform init
-            terraform apply -auto-approve \
-              -var="env=staging" \
-              -var="image_name=${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}" \
-              -var="acr_login_server=${{ secrets.ACR_LOGIN_SERVER }}" \
-              -var="acr_username=${{ secrets.ACR_USERNAME }}" \
-              -var="acr_password=${{ secrets.ACR_PASSWORD }}" \
-              -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
-              -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
-              -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
-              -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
-        - name: Run Smoke Test
-          run: curl -f https://$(terraform output -raw app_url) || exit 1
+      - name: Terraform Init & Apply
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve \
+            -var="env=staging" \
+            -var="image_name=${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}" \
+            -var="acr_login_server=${{ secrets.ACR_LOGIN_SERVER }}" \
+            -var="acr_username=${{ secrets.ACR_USERNAME }}" \
+            -var="acr_password=${{ secrets.ACR_PASSWORD }}" \
+            -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
 
-        - name: Terraform Destroy (Teardown)
-          run: |
-            cd terraform
-            terraform destroy -auto-approve \
-              -var="env=staging" \
-              -var="image_name=${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}" \
-              -var="acr_login_server=${{ secrets.ACR_LOGIN_SERVER }}" \
-              -var="acr_username=${{ secrets.ACR_USERNAME }}" \
-              -var="acr_password=${{ secrets.ACR_PASSWORD }}"
+      - name: Run Smoke Test
+        run: curl -f https://$(terraform output -raw app_url) || exit 1
 
+      - name: Terraform Destroy (Teardown)
+        run: |
+          cd terraform
+          terraform destroy -auto-approve \
+            -var="env=staging" \
+            -var="image_name=${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}" \
+            -var="acr_login_server=${{ secrets.ACR_LOGIN_SERVER }}" \
+            -var="acr_username=${{ secrets.ACR_USERNAME }}" \
+            -var="acr_password=${{ secrets.ACR_PASSWORD }}"
