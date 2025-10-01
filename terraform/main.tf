@@ -1,15 +1,17 @@
 provider "azurerm" {
   features {}
+  subscription_id = var.subscription_id
+  client_id       = var.client_id
+  client_secret   = var.client_secret
+  tenant_id       = var.tenant_id
 }
-
-
 
 resource "azurerm_resource_group" "rg" {
   name     = "awesome-devops-${var.env}-rg"
   location = "Australia East"
 }
 
-resource "azurerm_app_service_plan" "plan" {
+resource "azurerm_service_plan" "plan" {
   name                = "awesome-devops-${var.env}-plan"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
@@ -17,13 +19,14 @@ resource "azurerm_app_service_plan" "plan" {
     tier = "B1"
     size = "B1"
   }
+  os_type = "Linux"
 }
 
 resource "azurerm_app_service" "app" {
   name                = "awesome-devops-${var.env}-app"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  app_service_plan_id = azurerm_app_service_plan.plan.id
+  app_service_plan_id = azurerm_service_plan.plan.id
 
   site_config {
     linux_fx_version = "DOCKER|${var.image_name}"
@@ -36,4 +39,3 @@ resource "azurerm_app_service" "app" {
     DOCKER_REGISTRY_SERVER_PASSWORD     = var.acr_password
   }
 }
-
