@@ -30,12 +30,13 @@ resource "azurerm_linux_web_app" "app" {
   service_plan_id     = azurerm_service_plan.plan.id
 
   site_config {
-    application_stack {
-      docker_image_name     = "${var.acr_login_server}/awesome-devops-app:${var.env}"
-      docker_registry_url   = "https://${var.acr_login_server}"
-      docker_registry_username = var.acr_username
-      docker_registry_password = var.acr_password
-    }
+      application_stack {
+    docker_image_name        = "${var.acr_login_server}/awesome-devops-app:${var.image_tag}"
+    docker_registry_url      = "https://${var.acr_login_server}"
+    docker_registry_username = var.acr_username
+    docker_registry_password = var.acr_password
+  }
+
   }
 
   app_settings = {
