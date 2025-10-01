@@ -15,12 +15,10 @@ resource "azurerm_service_plan" "plan" {
   name                = "awesome-devops-${var.env}-plan"
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  sku {
-    tier = "B1"
-    size = "B1"
-  }
-  os_type = "Linux"
+  os_type             = "Linux"
+  sku_name            = "B1"
 }
+
 
 resource "azurerm_app_service" "app" {
   name                = "awesome-devops-${var.env}-app"
