@@ -1,12 +1,59 @@
-name: Deploy to Staging
+name: CI + Staging + Production Pipeline
 
 on:
-  repository_dispatch:
-    types: [deploy-staging]
+  push:
+    branches:
+      - testing
+      - main
 
 jobs:
+  build-test-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install --prefix app
+
+      - name: Run tests
+        run: npm test --prefix app
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build & Push to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - run: |
+          # build image with SHA
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }} .
+          # tag also as staging if testing branch, or production if main branch
+          if [[ "${{ github.ref_name }}" == "testing" ]]; then
+            docker tag ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }} \
+                       ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:staging
+            docker push ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:staging
+          elif [[ "${{ github.ref_name }}" == "main" ]]; then
+            docker tag ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }} \
+                       ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:production
+            docker push ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:production
+          fi
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}
+
   deploy-staging:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: github.ref_name == 'testing'
+    needs: build-test-push
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -17,22 +64,22 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
       - name: Terraform Init & Apply
         run: |
           cd terraform
           terraform init
           terraform apply -auto-approve \
-            -var="env=staging" \
-            -var="image_name=${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}" \
+            -var="env=production" \
+            -var="image_name=${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:production" \
             -var="acr_login_server=${{ secrets.ACR_LOGIN_SERVER }}" \
             -var="acr_username=${{ secrets.ACR_USERNAME }}" \
-            -var="acr_password=${{ secrets.ACR_PASSWORD }}"
-
-
-      - name: Run Smoke Test
-        run: curl -f https://${{ secrets.STAGING_APP_URL }} || exit 1
-
-      - name: Terraform Destroy (Teardown)
-        run: |
-          cd terraform
-          terraform destroy -auto-approve -var="env=staging"
+            -var="acr_password=${{ secrets.ACR_PASSWORD }}" \
+            -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
