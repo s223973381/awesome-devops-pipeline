@@ -38,3 +38,10 @@ jobs:
       - run: |
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }} .
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}
+
+      - name: Trigger Staging Workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          event-type: deploy-staging
