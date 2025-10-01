@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI + Staging Pipeline
 
 on:
   push:
@@ -23,7 +23,7 @@ jobs:
       - name: Run tests
         run: npm test --prefix app
 
-      - name: Log in to Azure
+      - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
@@ -39,9 +39,39 @@ jobs:
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }} .
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}
 
-      - name: Trigger Staging Workflow
-        uses: peter-evans/repository-dispatch@v2
+  deploy-staging:
+    needs: build-test-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          event-type: deploy-staging
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Terraform Init & Apply
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve \
+            -var="env=staging" \
+            -var="image_name=${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}" \
+            -var="acr_login_server=${{ secrets.ACR_LOGIN_SERVER }}" \
+            -var="acr_username=${{ secrets.ACR_USERNAME }}" \
+            -var="acr_password=${{ secrets.ACR_PASSWORD }}"
+
+      - name: Run Smoke Test
+        run: curl -f https://$(terraform output -raw app_url) || exit 1
+
+      # Optional destroy
+      - name: Terraform Destroy
+        run: |
+          cd terraform
+          terraform destroy -auto-approve \
+            -var="env=staging" \
+            -var="image_name=${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}" \
+            -var="acr_login_server=${{ secrets.ACR_LOGIN_SERVER }}" \
+            -var="acr_username=${{ secrets.ACR_USERNAME }}" \
+            -var="acr_password=${{ secrets.ACR_PASSWORD }}"
