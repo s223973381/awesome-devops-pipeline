@@ -28,4 +28,12 @@ resource "azurerm_app_service" "app" {
   site_config {
     linux_fx_version = "DOCKER|${var.image_name}"
   }
+
+  app_settings = {
+    WEBSITES_ENABLE_APP_SERVICE_STORAGE = "false"
+    DOCKER_REGISTRY_SERVER_URL          = "https://${var.acr_login_server}"
+    DOCKER_REGISTRY_SERVER_USERNAME     = var.acr_username
+    DOCKER_REGISTRY_SERVER_PASSWORD     = var.acr_password
+  }
 }
+
