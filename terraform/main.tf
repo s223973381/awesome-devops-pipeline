@@ -2,7 +2,7 @@ provider "azurerm" {
   features {}
 }
 
-variable "env" {}
+
 
 resource "azurerm_resource_group" "rg" {
   name     = "awesome-devops-${var.env}-rg"
