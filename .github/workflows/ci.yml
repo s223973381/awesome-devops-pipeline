@@ -85,3 +85,37 @@ jobs:
             -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
             -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
             -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+
+  deploy-production:
+    if: github.ref_name == 'main'
+    needs: build-test-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Init & Apply (Production)
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve \
+            -var="env=production" \
+            -var="image_tag=${{ github.sha }}" \
+            -var="acr_login_server=${{ secrets.ACR_LOGIN_SERVER }}" \
+            -var="acr_username=${{ secrets.ACR_USERNAME }}" \
+            -var="acr_password=${{ secrets.ACR_PASSWORD }}" \
+            -var="subscription_id=${{ secrets.AZURE_SUBSCRIPTION_ID }}" \
+            -var="client_id=${{ secrets.AZURE_CLIENT_ID }}" \
+            -var="client_secret=${{ secrets.AZURE_CLIENT_SECRET }}" \
+            -var="tenant_id=${{ secrets.AZURE_TENANT_ID }}"
+

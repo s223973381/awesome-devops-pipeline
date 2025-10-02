@@ -8,13 +8,13 @@ provider "azurerm" {
   resource_provider_registrations = "none"
 }
 
-# Create Resource Group
+# Resource Group
 resource "azurerm_resource_group" "rg" {
   name     = "awesome-devops-${var.env}-rg"
   location = "Australia East"
 }
 
-# Create App Service Plan
+# App Service Plan
 resource "azurerm_service_plan" "plan" {
   name                = "awesome-devops-${var.env}-plan"
   location            = azurerm_resource_group.rg.location
@@ -23,7 +23,7 @@ resource "azurerm_service_plan" "plan" {
   sku_name            = "B1"
 }
 
-# Create Web App
+# Web App
 resource "azurerm_linux_web_app" "app" {
   name                = "awesome-devops-${var.env}-app"
   location            = azurerm_resource_group.rg.location
