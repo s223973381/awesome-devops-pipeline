@@ -44,7 +44,4 @@ resource "azurerm_linux_web_app" "app" {
   }
 }
 
-# Output app URL
-output "app_url" {
-  value = azurerm_linux_web_app.app.default_hostname
-}
+
