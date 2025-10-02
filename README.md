@@ -6,7 +6,7 @@ This project demonstrates **End-to-End Automated CI/CD** with:
 - Production (manual approval + deploy)
 
 ## Features
-✅ Automated builds on `testing` branch  
+✅ Automated builds on `testing` branchh 
 ✅ Staging environment deployed & destroyed on demand  
 ✅ Production environment deployed manually  
 ✅ Terraform for Azure provisioning 
