@@ -1,5 +1,5 @@
 variable "env" {}
-variable "image_name" {}
+
 variable "acr_login_server" {}
 variable "acr_username" {}
 variable "acr_password" {}
@@ -9,5 +9,6 @@ variable "client_secret" {}
 variable "tenant_id" {}
 variable "image_tag" {
   description = "The Docker image tag to deploy (commit SHA or staging/production)"
+  default     = "latest"
   type        = string
 }
