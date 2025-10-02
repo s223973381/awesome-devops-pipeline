@@ -31,7 +31,7 @@ resource "azurerm_linux_web_app" "app" {
 
   site_config {
   application_stack {
-    docker_image_name     = "${var.acr_login_server}/awesome-devops-app"
+    docker_image_name        = "${var.acr_login_server}/awesome-devops-app:${var.image_tag}"
     docker_image_tag      = var.image_tag
     docker_registry_url   = "https://${var.acr_login_server}"
     docker_registry_username = var.acr_username
