@@ -2,14 +2,14 @@
 
 This project demonstrates **End-to-End Automated CI/CD** with:
 - CI (build, test, push to ACR)
-- Staging (provision, deploy, smoke test, teardown)
+- Staging 1 & 2 (provision, deploy, smoke test, teardown)
 - Production (manual approval + deploy)
 
 ## Features
 ✅ Automated builds on `testing` branch  
 ✅ Staging environment deployed & destroyed on demand  
 ✅ Production environment deployed manually  
-✅ Terraform for Azure provisioning  
+✅ Terraform for Azure provisioning 
 
 ## Workflows
 - `.github/workflows/ci.yml`
