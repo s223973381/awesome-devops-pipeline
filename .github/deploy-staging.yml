@@ -39,6 +39,7 @@ jobs:
       - run: |
           # build image with SHA
           docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }} .
+          
           # tag also as staging if testing branch, or production if main branch
           if [[ "${{ github.ref_name }}" == "testing" ]]; then
             docker tag ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }} \
@@ -49,6 +50,8 @@ jobs:
                        ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:production
             docker push ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:production
           fi
+
+          # always push commit SHA
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/awesome-devops-app:${{ github.sha }}
 
   deploy-staging:
@@ -70,8 +73,7 @@ jobs:
           terraform_version: 1.6.6
 
       - name: Clean Terraform cache
-        run: rm -rf .terraform terraform.tfstate*
-
+        run: rm -rf terraform/.terraform terraform/terraform.tfstate*
 
       - name: Terraform Init & Apply
         run: |
